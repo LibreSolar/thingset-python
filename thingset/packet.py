@@ -78,7 +78,7 @@ class SingleFrame(PublicationFrame):
     def identifier(self):
         id_prio = self._priority << 26
         id_doid = self._dataobjectID << 8
-        return id_prio | self.SINGLE_ID_MASK | id_doid | self.source 
+        return id_prio | self.SINGLE_ID_MASK | id_doid | self.source
 
     @property
     def priority(self):
@@ -86,8 +86,6 @@ class SingleFrame(PublicationFrame):
 
     @priority.setter
     def priority(self, priority):
-        if priority not in [4,5,6]:
-            raise ValueError("Priority must be 4, 5 or 6 for publication frame (got: {}).".format(priority))
         self._priority = priority
 
     @property
@@ -100,13 +98,7 @@ class SingleFrame(PublicationFrame):
             self._data = bytes()
         elif not isinstance(data, bytes):
             raise TypeError("Wrong data type. Must be bytes, not {}".format(type(data)))
-        if data[0] >= 64:
-            raise ValueError("Data fromat wrong. First byte cannot be > 0x3F (got: {})".format(hex(data[0])))
-        if data[0] >= 32:
-            cborByte = ((data[0] & 0x18) << 1) + (data[0] & 0x07) + 0xC0
-        else:
-            cborByte = ((data[0] & 0x1C) << 3) + (data[0] & 0x03) + 0x18
-        self._data = bytes.fromhex(hex(cborByte)[2:] + data.hex()[2:])
+        self._data = data
         self._cbor = loads(self._data)
 
     @property

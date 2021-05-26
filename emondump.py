@@ -11,14 +11,14 @@ dataObject = {0x00:{0x4001: 'vBat', 0x4002: 'vLoad', 0x4003: 'vCell1', 0x4004: '
 			  0x4005: 'tempExt', 0x4006: 'tempInt', 0x4007: 'loadEn', 0x4008: 'eInputDay_Wh',
 			  0x4009: 'eOutputDay_Wh', 0x400A: 'eInputTotal_Wh', 0x400B: 'eOutputTotal_Wh'}}
 
-dataBMS = {'vBat': 0} 
-dataMPPT = {'vBat': 0} 
+dataBMS = {'vBat': 0}
+dataMPPT = {'vBat': 0}
 end = 0
 
 start = time.time()
 while(True):
 	frame = sock.receive()
-	node = -1 
+	node = -1
 	if frame.source == 0x0A:
 		node = 'MPPT'
 		dataMPPT.update({dataObject[0x0A][frame.dataobjectID]: float(frame.cbor)})
