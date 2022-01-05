@@ -45,6 +45,7 @@ print("  > iPatch (bool) - Discharge enable: " + str(ts.patch(bms_id, 0x05, {0x6
 print("  > iPatch (string) - Password = abcd: " + str(ts.patch(bms_id, 0xEE, {0xEF: 'abcd'})))
 print("   iPatch (int) - PcbDisSC_us = 200: " + str(ts.patch(bms_id, 0x06, {0x41: 200})))
 print("   iPatch (bool) - .pub.can.enable = False: " + str(ts.patch(bms_id, 0xF5, {0xF6: False})))
+print("   iPatch (bool) - .pub.can.enable = True: " + str(ts.patch(bms_id, 0xF5, {0xF6: True})))
 
 # FETCH
 print("  > Fetch - Request BatNom_Ah from CONF Path: " + str(ts.fetch(bms_id, 0x06, [0x31])))
