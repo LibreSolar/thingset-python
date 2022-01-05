@@ -31,6 +31,16 @@ class ThingSet_CAN(threading.Thread):
         self.data[addr] = {}
         self.__sock.subscribe(addr)
 
+    @staticmethod
+    def translate(data:dict, id_name_map:dict):
+        '''Translates data with id as keys to data with strings as keys'''
+        str_dict = None
+        try:
+            str_dict = dict((id_name_map[key], value) for (key, value) in data.items())
+        except KeyError as e:
+            print(f'Cannot translate ID! Maybe missing in map. {KeyError}')
+        return str_dict
+
     def get(self, addr: int, id: int):
         '''Retrieve all data from a path'''
         ret = None
