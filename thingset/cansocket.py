@@ -1,4 +1,3 @@
-import datetime
 import socket
 import struct
 import time
@@ -12,7 +11,7 @@ class CANsocket(object):
     databuffer = bytearray()
     packetsize = int()
     last_index = int()
-    flow_control = {}
+    flow_control = None
     sub_addresses = list()
     address = int()
 
@@ -90,16 +89,17 @@ class CANsocket(object):
                     expected_index = (self.last_index + 1) % 16
                     if frame.index == expected_index:
                         self.last_index = expected_index
-                        frame.data = data[1:]
-                        self.databuffer.extend(frame.data)
+                        self.databuffer.extend(data[1:])
                         if len(self.databuffer) >= self.packetsize:
                             status = self.status_code[self.databuffer[0]]
                             ret = (False, status,
                                    (loads(self.databuffer[1:])), None)
+                    else:
+                        print("Received Consecutive Frame with invalid Index.")
+                        ret = (False, None, None, None)
+
                 if frame.type == RequestFrame.FRAME_TYPE_FLOWC:
-                    self.flow_control['flag'] = frame.fcflag
-                    self.flow_control['blocksize'] = frame.fcflag
-                    self.flow_control['delay'] = frame.fcflag
+                    self.flow_control = (frame.fcflag, frame.blocksize, frame.delay)
 
         return ret
 
@@ -140,13 +140,12 @@ class CANsocket(object):
                     # Consecutive Frames
                     flag, blocksize, delay_s = self.evalFCFlags()
                     if flag == 'Abort':
+                        print("Abort by Flow Control Flag from Device")
                         return False
-                    self.flow_control.clear()
                     while len(data) != 0:
                         if len(data) >= 7:
                             frame_data = bytearray()
-                            index += 1
-                            index %= 16
+                            index += 1 % 16
                             frame_data.append(0x20 | index)
                             frame_data.extend(data[:7])
                             del data[:7]
@@ -158,8 +157,8 @@ class CANsocket(object):
                                 if self.waitFC():
                                     flag, blocksize, delay_s = self.evalFCFlags()
                                     if flag == 'Abort':
+                                        print("Abort by Flow Control Flag from Device")
                                         return False
-                                    self.flow_control.clear()
                                 else:
                                     print("Flow Control Timeout while sending")
                                     return False
@@ -167,7 +166,7 @@ class CANsocket(object):
                                 time.sleep(delay_s)
                         else:
                             frame_data = bytearray()
-                            index += 1
+                            index += 1 % 16
                             frame_data.append(0x20 | index)
                             frame_data.extend(data)
                             self.s.send(struct.pack(
@@ -181,23 +180,23 @@ class CANsocket(object):
     def waitFC(self, timeout: float = 0.5):
         '''Wait for Flow Control Frame and return False on Timeout and True on Success'''
         ret = bool(False)
-        timeout = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.now() <= timeout:
+        timeout = time.perf_counter() + timeout
+        while time.perf_counter() <= timeout:
             if self.flow_control:
                 ret = True
                 break
+            time.sleep(0.001)
         return ret
 
     def evalFCFlags(self):
-        fcflag = self.flow_control['flag']
-        blocksize = self.flow_control['blocksize']
-        delay_code = self.flow_control['delay']
-        if delay_code <= 127:
+        fcflag, blocksize, delay_code = self.flow_control
+        self.flow_control = None
+        if delay_code > 0 and delay_code <= 127:
             delay_s = float(delay_code) / 1000.0
         elif delay_code >= 0xF1 and delay_code <= 0xF9:
             delay_s = float(delay_code & 0xF) / 10000.0
         else:
             delay_s = 0.0
-        if self.fc_flags[fcflag] == 'Wait':
+        if fcflag == 'Wait':
             time.sleep(1.0)
-        return (self.fc_flags[fcflag], blocksize, delay_s)
+        return (fcflag, blocksize, delay_s)

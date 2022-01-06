@@ -1,9 +1,8 @@
 import threading
 import time
-import datetime
 from thingset.cansocket import CANsocket
 from thingset.packet import RequestFrame
-from cbor2 import loads, dumps
+from cbor2 import dumps
 
 
 class ThingSet_CAN(threading.Thread):
@@ -130,11 +129,12 @@ class ThingSet_CAN(threading.Thread):
     def __waitResponse(self, timeout: float = 1.5):
         '''Wait for response and return False on Timeout and True on Success'''
         ret = bool(False)
-        timeout = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-        while datetime.datetime.now() <= timeout:
+        timeout = time.perf_counter() + timeout
+        while time.perf_counter() <= timeout:
             if self.__response != None:
                 ret = True
                 break
+            time.sleep(0.001)
         return ret
 
     def __getResponse(self):
