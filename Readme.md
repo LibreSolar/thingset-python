@@ -45,7 +45,7 @@ print(frame.source)
 ``` python
 from thingset.cansocket import CANsocket
 sock = CANsocket('vcan0')  # or other interface
-while(True)
+while(True):
   frame = sock.receive()
 ```
 
